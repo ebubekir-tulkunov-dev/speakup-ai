@@ -1,4 +1,4 @@
-# Dil Programı
+# Language App
 
 **An AI-powered personal language learning platform for Turkish speakers learning English.**
 
