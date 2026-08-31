@@ -1,0 +1,2 @@
+livekit-agents[openai,deepgram,cartesia,minimax,silero]>=1.6.7
+python-dotenv>=1.0.0

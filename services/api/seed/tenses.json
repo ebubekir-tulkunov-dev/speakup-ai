@@ -1,0 +1,158 @@
+[
+  {
+    "slug": "present-simple",
+    "name_en": "Present Simple",
+    "name_tr": "Geniş Zaman",
+    "formula": "Subject + V1 (+ s/es in 3rd person)",
+    "description_tr": "Alışkanlıklar, genel gerçekler ve rutinler için kullanılır.",
+    "category": "present",
+    "examples": [
+      {"type": "positive", "en": "I work every day.", "tr": "Her gün çalışırım."},
+      {"type": "negative", "en": "She doesn't like coffee.", "tr": "Kahve sevmez."},
+      {"type": "question", "en": "Do you speak English?", "tr": "İngilizce konuşur musun?"}
+    ]
+  },
+  {
+    "slug": "present-continuous",
+    "name_en": "Present Continuous",
+    "name_tr": "Şimdiki Zaman",
+    "formula": "Subject + am/is/are + V-ing",
+    "description_tr": "Şu anda devam eden eylemler için kullanılır.",
+    "category": "present",
+    "examples": [
+      {"type": "positive", "en": "I am studying now.", "tr": "Şu an ders çalışıyorum."},
+      {"type": "negative", "en": "They aren't watching TV.", "tr": "TV izlemiyorlar."},
+      {"type": "question", "en": "Is he reading?", "tr": "O okuyor mu?"}
+    ]
+  },
+  {
+    "slug": "present-perfect",
+    "name_en": "Present Perfect",
+    "name_tr": "Yakın Geçmiş Zaman",
+    "formula": "Subject + have/has + V3",
+    "description_tr": "Geçmişte başlayıp şimdiye etkisi olan eylemler için kullanılır.",
+    "category": "present",
+    "examples": [
+      {"type": "positive", "en": "I have finished my homework.", "tr": "Ödevimi bitirdim."},
+      {"type": "negative", "en": "She hasn't arrived yet.", "tr": "Henüz gelmedi."},
+      {"type": "question", "en": "Have you ever been to London?", "tr": "Hiç Londra'ya gittin mi?"}
+    ]
+  },
+  {
+    "slug": "present-perfect-continuous",
+    "name_en": "Present Perfect Continuous",
+    "name_tr": "Yakın Geçmişin Sürekli Zamanı",
+    "formula": "Subject + have/has + been + V-ing",
+    "description_tr": "Geçmişte başlayıp hâlâ devam eden eylemler için kullanılır.",
+    "category": "present",
+    "examples": [
+      {"type": "positive", "en": "I have been learning English for two years.", "tr": "İki yıldır İngilizce öğreniyorum."},
+      {"type": "negative", "en": "He hasn't been feeling well.", "tr": "İyi hissetmiyor."},
+      {"type": "question", "en": "How long have you been waiting?", "tr": "Ne kadar süredir bekliyorsun?"}
+    ]
+  },
+  {
+    "slug": "past-simple",
+    "name_en": "Past Simple",
+    "name_tr": "Geçmiş Zaman",
+    "formula": "Subject + V2 / did + V1",
+    "description_tr": "Geçmişte tamamlanmış eylemler için kullanılır.",
+    "category": "past",
+    "examples": [
+      {"type": "positive", "en": "I visited Paris last year.", "tr": "Geçen yıl Paris'i ziyaret ettim."},
+      {"type": "negative", "en": "She didn't call me.", "tr": "Beni aramadı."},
+      {"type": "question", "en": "Did you enjoy the movie?", "tr": "Filmi beğendin mi?"}
+    ]
+  },
+  {
+    "slug": "past-continuous",
+    "name_en": "Past Continuous",
+    "name_tr": "Geçmişte Sürekli Zaman",
+    "formula": "Subject + was/were + V-ing",
+    "description_tr": "Geçmişte belirli bir anda devam eden eylemler için kullanılır.",
+    "category": "past",
+    "examples": [
+      {"type": "positive", "en": "I was reading when you called.", "tr": "Aradığında okuyordum."},
+      {"type": "negative", "en": "They weren't sleeping.", "tr": "Uyumuyorlardı."},
+      {"type": "question", "en": "Were you working yesterday?", "tr": "Dün çalışıyor muydun?"}
+    ]
+  },
+  {
+    "slug": "past-perfect",
+    "name_en": "Past Perfect",
+    "name_tr": "Miş'li Geçmiş Zaman",
+    "formula": "Subject + had + V3",
+    "description_tr": "Geçmişteki bir eylemden önce tamamlanmış eylemler için kullanılır.",
+    "category": "past",
+    "examples": [
+      {"type": "positive", "en": "I had already eaten when she arrived.", "tr": "O geldiğinde çoktan yemek yemiştim."},
+      {"type": "negative", "en": "He hadn't finished the report.", "tr": "Raporu bitirmemişti."},
+      {"type": "question", "en": "Had you met him before?", "tr": "Onunla daha önce tanışmış mıydın?"}
+    ]
+  },
+  {
+    "slug": "past-perfect-continuous",
+    "name_en": "Past Perfect Continuous",
+    "name_tr": "Miş'li Geçmişin Sürekli Zamanı",
+    "formula": "Subject + had + been + V-ing",
+    "description_tr": "Geçmişteki bir ana kadar süren eylemler için kullanılır.",
+    "category": "past",
+    "examples": [
+      {"type": "positive", "en": "I had been studying for hours.", "tr": "Saatlerce ders çalışıyordum."},
+      {"type": "negative", "en": "She hadn't been feeling well.", "tr": "İyi hissetmiyordu."},
+      {"type": "question", "en": "How long had you been waiting?", "tr": "Ne kadar süredir bekliyordun?"}
+    ]
+  },
+  {
+    "slug": "future-simple",
+    "name_en": "Future Simple",
+    "name_tr": "Gelecek Zaman",
+    "formula": "Subject + will + V1",
+    "description_tr": "Gelecekte olacak eylemler için kullanılır.",
+    "category": "future",
+    "examples": [
+      {"type": "positive", "en": "I will call you tomorrow.", "tr": "Yarın seni arayacağım."},
+      {"type": "negative", "en": "She won't come to the party.", "tr": "Partiye gelmeyecek."},
+      {"type": "question", "en": "Will you help me?", "tr": "Bana yardım eder misin?"}
+    ]
+  },
+  {
+    "slug": "future-continuous",
+    "name_en": "Future Continuous",
+    "name_tr": "Gelecekte Sürekli Zaman",
+    "formula": "Subject + will + be + V-ing",
+    "description_tr": "Gelecekte belirli bir anda devam edecek eylemler için kullanılır.",
+    "category": "future",
+    "examples": [
+      {"type": "positive", "en": "I will be working at 9 PM.", "tr": "Saat 9'da çalışıyor olacağım."},
+      {"type": "negative", "en": "They won't be sleeping.", "tr": "Uyuyor olmayacaklar."},
+      {"type": "question", "en": "Will you be studying tonight?", "tr": "Bu gece ders çalışıyor olacak mısın?"}
+    ]
+  },
+  {
+    "slug": "future-perfect",
+    "name_en": "Future Perfect",
+    "name_tr": "Gelecekte Tamamlanmış Zaman",
+    "formula": "Subject + will + have + V3",
+    "description_tr": "Gelecekte belirli bir ana kadar tamamlanmış olacak eylemler için kullanılır.",
+    "category": "future",
+    "examples": [
+      {"type": "positive", "en": "I will have finished by Friday.", "tr": "Cumaya kadar bitirmiş olacağım."},
+      {"type": "negative", "en": "She won't have arrived by then.", "tr": "O zamana kadar varmış olmayacak."},
+      {"type": "question", "en": "Will you have completed the project?", "tr": "Projeyi tamamlamış olacak mısın?"}
+    ]
+  },
+  {
+    "slug": "future-perfect-continuous",
+    "name_en": "Future Perfect Continuous",
+    "name_tr": "Gelecekte Sürekli Tamamlanmış Zaman",
+    "formula": "Subject + will + have + been + V-ing",
+    "description_tr": "Gelecekte belirli bir ana kadar sürmüş olacak eylemler için kullanılır.",
+    "category": "future",
+    "examples": [
+      {"type": "positive", "en": "I will have been working here for 10 years.", "tr": "Burada 10 yıldır çalışıyor olacağım."},
+      {"type": "negative", "en": "He won't have been studying long.", "tr": "Uzun süredir ders çalışıyor olmayacak."},
+      {"type": "question", "en": "How long will you have been waiting?", "tr": "Ne kadar süredir bekliyor olacaksın?"}
+    ]
+  }
+]

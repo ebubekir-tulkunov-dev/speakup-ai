@@ -1,0 +1,122 @@
+[
+  {
+    "id": "coach_past_day",
+    "title_tr": "Bugün ne yaptın?",
+    "description_tr": "Sen ve arkadaşın kahve içiyorsunuz. Ona bugün yaptığın şeyleri anlat — sabahtan akşama kadar neler oldu?",
+    "target_tense": "Past Simple",
+    "target_tense_hint": "Subject + V2 (went, ate, saw...)",
+    "target_tense_example": "I went to the office and had a long meeting.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "noun", "adverb"],
+    "difficulty": "B1",
+    "category": "daily"
+  },
+  {
+    "id": "coach_future_plans",
+    "title_tr": "Yarın ne yapacaksın?",
+    "description_tr": "Arkadaşın yarınki planlarını merak ediyor. Ona yarın ve hafta sonu neler yapmayı planladığını anlat.",
+    "target_tense": "Future (going to / will)",
+    "target_tense_hint": "Subject + am/is/are going to + V1 / Subject + will + V1",
+    "target_tense_example": "I'm going to visit my friend tomorrow.",
+    "suggested_word_count": 7,
+    "suggested_word_types": ["verb", "noun", "adjective"],
+    "difficulty": "A2",
+    "category": "daily"
+  },
+  {
+    "id": "coach_argument",
+    "title_tr": "Bir arkadaşınla tartışma",
+    "description_tr": "Arkadaşınla küçük bir anlaşmazlık yaşadın. Ona ne olduğunu anlat, neden üzgün olduğunu açıkla ve birlikte bir çözüm bulmaya çalış.",
+    "target_tense": "Past Simple + Present Perfect",
+    "target_tense_hint": "V2 for completed actions / have/has + V3 for results now",
+    "target_tense_example": "We argued yesterday and I haven't spoken to her since then.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "adjective", "noun"],
+    "difficulty": "B1",
+    "category": "social"
+  },
+  {
+    "id": "coach_short_story",
+    "title_tr": "Kısa bir hikaye anlat",
+    "description_tr": "Arkadaşına başından geçen ilginç, komik veya şaşırtıcı bir olayı anlat. Ne oldu, nerede oldu, sonunda ne oldu?",
+    "target_tense": "Past Simple + Past Continuous",
+    "target_tense_hint": "V2 for main events / was/were + V-ing for background",
+    "target_tense_example": "I was walking to work when I saw something amazing.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "adverb", "adjective"],
+    "difficulty": "B1",
+    "category": "storytelling"
+  },
+  {
+    "id": "coach_give_advice",
+    "title_tr": "Birine tavsiye ver",
+    "description_tr": "Arkadaşın bir sorunla karşı karşıya. Onu dinle, ne yapması gerektiğini söyle ve tavsiyelerde bulun.",
+    "target_tense": "Modal Verbs (should / could / might)",
+    "target_tense_hint": "Subject + should/could/might + V1",
+    "target_tense_example": "You should talk to your manager about this problem.",
+    "suggested_word_count": 7,
+    "suggested_word_types": ["verb", "adjective", "noun"],
+    "difficulty": "B1",
+    "category": "social"
+  },
+  {
+    "id": "coach_describe_place",
+    "title_tr": "Bir yeri tarif et",
+    "description_tr": "En sevdiğin yeri — bir şehir, bir kafe, bir park — arkadaşına tarif et. Nasıl görünüyor, nesi güzel, ne hissediyorsun orada?",
+    "target_tense": "Present Simple + There is/are",
+    "target_tense_hint": "There is/are + noun / Subject + V1",
+    "target_tense_example": "There is a beautiful park near my house. It has big trees.",
+    "suggested_word_count": 7,
+    "suggested_word_types": ["adjective", "noun", "adverb"],
+    "difficulty": "A2",
+    "category": "descriptive"
+  },
+  {
+    "id": "coach_vacation",
+    "title_tr": "Tatil planlarından bahset",
+    "description_tr": "Yaklaşan bir tatil planın var. Nereye gideceksin, ne yapacaksın, daha önce hiç orada bulundun mu? Arkadaşına anlat.",
+    "target_tense": "Future + Present Perfect",
+    "target_tense_hint": "will/going to + V1 for plans / have/has + V3 for experience",
+    "target_tense_example": "I'm going to go to Italy. I have never been there before.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "noun", "adjective"],
+    "difficulty": "B2",
+    "category": "travel"
+  },
+  {
+    "id": "coach_problem_solve",
+    "title_tr": "Bir sorun anlat ve çöz",
+    "description_tr": "İş yerinde veya okulda bir sorunla karşılaştın. Sorunu açıkla, sebebini anlat ve ne yapacağını planla.",
+    "target_tense": "Past Simple + Conditionals (if...would)",
+    "target_tense_hint": "V2 for what happened / If + V2, would + V1",
+    "target_tense_example": "The project failed because we didn't plan well. If I had more time, I would do it differently.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "noun", "adjective"],
+    "difficulty": "B2",
+    "category": "problem_solving"
+  },
+  {
+    "id": "coach_habits",
+    "title_tr": "Alışkanlıklarını anlat",
+    "description_tr": "Günlük rutinini, alışkanlıklarını ve sık yaptığın şeyleri anlat. Sabah ne yaparsın, akşam ne yaparsın?",
+    "target_tense": "Present Simple + Adverbs of frequency",
+    "target_tense_hint": "Subject + V1 (+ s/es) / always, usually, often, sometimes, never",
+    "target_tense_example": "I usually wake up at 7 and I always drink coffee.",
+    "suggested_word_count": 7,
+    "suggested_word_types": ["verb", "adverb", "noun"],
+    "difficulty": "A2",
+    "category": "daily"
+  },
+  {
+    "id": "coach_experience",
+    "title_tr": "Bir deneyimini paylaş",
+    "description_tr": "Hayatında yaşadığın önemli veya unutulmaz bir deneyimi anlat. Ne zaman oldu, nasıl hissettin, seni nasıl etkiledi?",
+    "target_tense": "Present Perfect + Past Simple",
+    "target_tense_hint": "have/has + V3 for experience / V2 for specific details",
+    "target_tense_example": "I have traveled to many countries. Last year I visited Japan.",
+    "suggested_word_count": 8,
+    "suggested_word_types": ["verb", "adjective", "noun"],
+    "difficulty": "B1",
+    "category": "personal"
+  }
+]

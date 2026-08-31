@@ -1,0 +1,42 @@
+[
+  {
+    "title": "At the Airport",
+    "context": "You are at the airport checking in for your flight. Practice asking questions and giving information.",
+    "difficulty": "A2",
+    "target_tense_slug": "present-perfect",
+    "opening_line": "Good morning! May I see your passport, please?",
+    "category": "travel"
+  },
+  {
+    "title": "At the Restaurant",
+    "context": "You are ordering food at a restaurant. Practice polite requests and preferences.",
+    "difficulty": "A2",
+    "target_tense_slug": "present-simple",
+    "opening_line": "Welcome! Are you ready to order?",
+    "category": "daily"
+  },
+  {
+    "title": "Job Interview",
+    "context": "You are in a job interview. Talk about your experience and skills.",
+    "difficulty": "B1",
+    "target_tense_slug": "present-perfect",
+    "opening_line": "Tell me about your previous work experience.",
+    "category": "work"
+  },
+  {
+    "title": "At the Doctor's",
+    "context": "You are visiting a doctor. Describe your symptoms and medical history.",
+    "difficulty": "B1",
+    "target_tense_slug": "present-perfect-continuous",
+    "opening_line": "What seems to be the problem today?",
+    "category": "health"
+  },
+  {
+    "title": "Shopping",
+    "context": "You are shopping for clothes. Ask about sizes, prices, and colors.",
+    "difficulty": "A2",
+    "target_tense_slug": "past-simple",
+    "opening_line": "Hello! Can I help you find something?",
+    "category": "daily"
+  }
+]

@@ -1,0 +1,83 @@
+DIL PROGRAMI — SERVIS CALISTIRMA KOMUTLARI
+==========================================
+
+Not: Proje kokundeki .env dosyasi gerekli (dil-programi/.env)
+MongoDB yerelde calisiyor olmali (mongodb://localhost:27017)
+AI servisi (port 8001) kelime/zaman/okuyucu uretimi icin acik olmali
+DASHSCOPE_API_KEY .env dosyasinda tanimli olmali (sk- ile baslar)
+DASHSCOPE_API_BASE=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+
+
+ILK KURULUM (bir kez)
+---------------------
+
+# API
+cd services/api
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+deactivate
+
+# AI
+cd ../ai
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+deactivate
+
+# Voice
+cd ../voice
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+deactivate
+
+# Seed veri (ilk kurulum)
+cd ../api
+source .venv/bin/activate
+PYTHONPATH=. python scripts/seed.py
+deactivate
+
+
+CALISTIRMA (her servis ayri terminal)
+-------------------------------------
+
+Terminal 1 — API (port 8000)
+cd services/api
+source .venv/bin/activate
+uvicorn main:app --reload --port 8000
+
+Terminal 2 — AI (port 8001)
+cd services/ai
+source .venv/bin/activate
+uvicorn main:app --reload --port 8001
+
+Terminal 3 — Voice Agent (LiveKit)
+cd services/voice
+source .venv/bin/activate
+python agent.py dev
+
+
+KISA YOL (proje kokunden)
+-------------------------
+# Hepsi birlikte (api + ai + web) — tek komut:
+./scripts/dev.sh
+# veya: ./scripts/dev.sh all
+
+# Tekil servisler (ayri terminaller):
+./scripts/dev.sh api
+./scripts/dev.sh ai
+./scripts/dev.sh web
+./scripts/dev.sh voice
+./scripts/dev.sh seed
+
+# Web ilk kurulum (bir kez):
+# cd apps/web && npm install
+
+
+ADRESLER
+--------
+API:     http://localhost:8000/docs
+AI:      http://localhost:8001/docs
+Web:     http://localhost:5173
+LiveKit: ws://127.0.0.1:7890

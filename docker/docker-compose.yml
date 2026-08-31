@@ -1,0 +1,11 @@
+services:
+  livekit:
+    container_name: dil-programi-livekit
+    image: livekit/livekit-server
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7890:7890"
+      - "7891:7891"
+      - "7892:7892/udp"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
