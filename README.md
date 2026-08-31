@@ -1,6 +1,6 @@
 
 # Speak Up AI
->>>>>>> a9ba29e (ready for public)
+
 
 **An AI-powered personal language learning platform.** Practice a target language (currently English) with explanations and glosses in your native language.
 
