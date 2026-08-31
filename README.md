@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# Language App
-=======
+
 # Speak Up AI
 >>>>>>> a9ba29e (ready for public)
 
