@@ -160,22 +160,34 @@ async def substitution_done(body: DrillDoneBody):
 
 @router.post("/speak-prompts")
 async def speak_prompts(body: SpeakPromptsBody):
-    """Turkish prompts for oral TR→EN translation, seeded with top-frequency vocab."""
+    """Prompts in the user's native language for oral translation into the target language."""
+    from app.models import User
+    from app.services.native_translation import resolve_native_translations
+
     topic = body.topic.strip()
     if not topic:
         raise HTTPException(400, "Topic boş olamaz")
+
+    user = await User.find_one(User.user_id == settings.default_user_id)
+    native_lang = (user.native_lang if user else "tr").lower()
+    target_lang = (user.target_lang if user else "en").lower()
 
     level = body.level if body.level != "ALL" else None
     query = Word.find(Word.level == level) if level else Word.find()
     words = await query.sort("-freq_zipf").limit(160).to_list()
 
-    candidates: list[dict] = []
+    candidates: list[Word] = []
     for w in words:
         if is_basic_lemma(w.lemma):
             continue
-        candidates.append({"lemma": w.lemma, "tr": w.translation_tr})
+        candidates.append(w)
     random.shuffle(candidates)
-    pool = candidates[:20]
+    pool_words = candidates[:20]
+    native_map = await resolve_native_translations(pool_words, native_lang)
+    pool = [
+        {"lemma": w.lemma, "tr": native_map.get(str(w.id), w.translation_tr)}
+        for w in pool_words
+    ]
 
     angle = _pick_angle(topic)
     tense = random.choice(TENSES)
@@ -191,6 +203,8 @@ async def speak_prompts(body: SpeakPromptsBody):
                 "angle": angle,
                 "tense": tense,
                 "exclude_texts": body.exclude_texts[:5],
+                "native_lang": native_lang,
+                "target_lang": target_lang,
             },
         )
     except Exception as e:
@@ -214,6 +228,8 @@ async def speak_prompts(body: SpeakPromptsBody):
         "word_pool_used": len(pool),
         "angle": angle,
         "tense": tense,
+        "native_lang": native_lang,
+        "target_lang": target_lang,
     }
 
 

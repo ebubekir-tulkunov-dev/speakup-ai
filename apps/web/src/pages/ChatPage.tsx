@@ -10,6 +10,18 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { cn } from "@/lib/utils";
+import {
+  DEFAULT_TENSE,
+  FREE_CHAT_SCENARIO,
+  NEW_CHAT_TITLE,
+  displayChatTitle,
+  displayScenario,
+  displayTense,
+  isDefaultTense,
+  isFreeChatScenario,
+  normalizeScenario,
+  normalizeTense,
+} from "@/lib/chatLabels";
 
 interface Correction {
   wrong: string;
@@ -31,14 +43,17 @@ interface ExtendedChatMessage {
 const COLLAPSE_AT = 280;
 const CEFR_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 
+const FREE_CHAT_SUGGESTIONS = [
+  "What is your dream vacation spot?",
+  "I would like to tell you about my day.",
+  "Can you correct my grammar mistakes?",
+  "Suggest a fun topic to discuss.",
+];
+
 const suggestionsMap: Record<string, string[]> = {
-  "Serbest sohbet": [
-    "What is your dream vacation spot?",
-    "I would like to tell you about my day.",
-    "Can you correct my grammar mistakes?",
-    "Suggest a fun topic to discuss."
-  ],
-  "general": [
+  [FREE_CHAT_SCENARIO]: FREE_CHAT_SUGGESTIONS,
+  "Serbest sohbet": FREE_CHAT_SUGGESTIONS,
+  general: [
     "Hello, nice to meet you!",
     "What should we talk about today?",
     "Can you repeat that, please?",
@@ -70,10 +85,10 @@ export function ChatPage() {
   const qc = useQueryClient();
   const [params, setParams] = useSearchParams();
   const sessionId = params.get("session");
-  const scenarioParam = params.get("scenario") ?? "Serbest sohbet";
-  const tenseParam = params.get("tense") ?? "Genel";
+  const scenarioParam = normalizeScenario(params.get("scenario") ?? FREE_CHAT_SCENARIO);
+  const tenseParam = normalizeTense(params.get("tense") ?? DEFAULT_TENSE);
   const levelParam = (params.get("level") ?? "B1").toUpperCase();
-  const mode = scenarioParam === "Serbest sohbet" ? "free" : "scenario";
+  const mode = isFreeChatScenario(scenarioParam) ? "free" : "scenario";
 
   const [level, setLevelState] = useState(levelParam);
   const [scenario, setScenario] = useState(scenarioParam);
@@ -89,7 +104,7 @@ export function ChatPage() {
   const [suggestions, setSuggestions] = useState(suggestionsMap[scenarioParam] || suggestionsMap.general);
   const [learningWords, setLearningWords] = useState<Record<string, boolean>>({});
   const [addedWords, setAddedWords] = useState<Record<string, boolean>>({});
-  const [sessionTitle, setSessionTitle] = useState("New chat");
+  const [sessionTitle, setSessionTitle] = useState(NEW_CHAT_TITLE);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -132,13 +147,15 @@ export function ChatPage() {
   useEffect(() => {
     if (!activeSession) return;
     setMessages(mapMessages(activeSession.messages));
-    setScenario(activeSession.scenario);
-    setTense(activeSession.tense);
+    setScenario(normalizeScenario(activeSession.scenario));
+    setTense(normalizeTense(activeSession.tense));
     setLevelState((activeSession.level || "B1").toUpperCase());
-    setSessionTitle(activeSession.title || "New chat");
+    setSessionTitle(displayChatTitle(activeSession.title || NEW_CHAT_TITLE));
     setShowTranslation({});
     setExpanded({});
-    setSuggestions(suggestionsMap[activeSession.scenario] || suggestionsMap.general);
+    setSuggestions(
+      suggestionsMap[normalizeScenario(activeSession.scenario)] || suggestionsMap.general,
+    );
     setAddedWords({});
   }, [activeSession]);
 
@@ -185,7 +202,7 @@ export function ChatPage() {
         tense,
         mode,
       });
-      setSessionTitle(saved.title);
+      setSessionTitle(displayChatTitle(saved.title));
       qc.invalidateQueries({ queryKey: ["chat-sessions"] });
     } catch {
       // quiet
@@ -203,11 +220,11 @@ export function ChatPage() {
     const next = new URLSearchParams();
     next.set("session", created.id);
     next.set("level", created.level || levelParam);
-    if (scenarioParam !== "Serbest sohbet") next.set("scenario", scenarioParam);
-    if (tenseParam !== "Genel") next.set("tense", tenseParam);
+    if (!isFreeChatScenario(scenarioParam)) next.set("scenario", scenarioParam);
+    if (!isDefaultTense(tenseParam)) next.set("tense", tenseParam);
     setParams(next, { replace: true });
     setMessages([]);
-    setSessionTitle(created.title);
+    setSessionTitle(displayChatTitle(created.title));
     focusInput();
   };
 
@@ -454,7 +471,7 @@ export function ChatPage() {
                 disabled={deleteMut.isPending}
                 onClick={(e) => {
                   e.stopPropagation();
-                  requestDelete(s.id, s.title);
+                  requestDelete(s.id, displayChatTitle(s.title));
                 }}
                 title="Delete chat"
                 aria-label="Delete chat"
@@ -462,8 +479,10 @@ export function ChatPage() {
                 <Trash2 className="size-3.5" strokeWidth={2.25} />
               </button>
               <button type="button" className="min-w-0 flex-1 text-left cursor-pointer" onClick={() => openSession(s.id)}>
-                <p className="text-xs font-semibold truncate text-foreground">{s.title}</p>
-                <p className="text-[10px] truncate opacity-70">{s.preview || s.scenario}</p>
+                <p className="text-xs font-semibold truncate text-foreground">{displayChatTitle(s.title)}</p>
+                <p className="text-[10px] truncate opacity-70">
+                  {s.preview || displayScenario(s.scenario)}
+                </p>
               </button>
             </div>
           ))}
@@ -483,7 +502,7 @@ export function ChatPage() {
             {sidebarOpen ? <PanelLeftClose className="size-4" /> : <PanelLeft className="size-4" />}
           </button>
           <h1 className="text-sm font-bold tracking-tight shrink-0 max-w-[10rem] truncate" title={sessionTitle}>
-            {sessionTitle}
+            {displayChatTitle(sessionTitle)}
           </h1>
           <div className="flex flex-wrap gap-1 p-0.5 bg-secondary/40 rounded-lg border border-border/40">
             {CEFR_LEVELS.map((lvl) => (
@@ -503,8 +522,12 @@ export function ChatPage() {
             ))}
           </div>
           <div className="ml-auto flex items-center gap-1.5">
-            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">{scenario}</Badge>
-            {tense !== "Genel" && <Badge variant="outline" className="text-[10px]">{tense}</Badge>}
+            <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">
+              {displayScenario(scenario)}
+            </Badge>
+            {!isDefaultTense(tense) && (
+              <Badge variant="outline" className="text-[10px]">{displayTense(tense)}</Badge>
+            )}
             <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20 text-[10px]">Online</Badge>
             {sessionId && (
               <Button

@@ -8,8 +8,16 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 
 export function DashboardPage() {
-  const { data, isLoading } = useQuery({ queryKey: ["dashboard"], queryFn: api.dashboard });
-  const { data: health } = useQuery({ queryKey: ["health"], queryFn: api.health });
+  const { data, isLoading } = useQuery({
+    queryKey: ["dashboard"],
+    queryFn: api.dashboard,
+    staleTime: 60_000,
+  });
+  const { data: health } = useQuery({
+    queryKey: ["health"],
+    queryFn: api.health,
+    staleTime: 120_000,
+  });
 
   if (isLoading) return <p className="text-muted-foreground">Loading...</p>;
 
@@ -27,7 +35,7 @@ export function DashboardPage() {
   const quickLinks = [
   // Journal, Tenses ve Top Words geçici kapatıldı — bkz. lib/disabledFeatures.ts
     { to: "/vocab", icon: BookOpen, title: "Vocabulary Review", desc: `${data?.vocab_due ?? 0} cards due`, color: "text-primary bg-primary/10" },
-    { to: "/speak", icon: Speech, title: "Speak & Translate", desc: "Read Turkish, speak English", color: "text-violet-500 bg-violet-500/10" },
+    { to: "/speak", icon: Speech, title: "Speak & Translate", desc: "Oral translation practice", color: "text-violet-500 bg-violet-500/10" },
     { to: "/chat", icon: Bot, title: "AI Chat", desc: "Scenario or free practice", color: "text-emerald-500 bg-emerald-500/10" },
   ];
 

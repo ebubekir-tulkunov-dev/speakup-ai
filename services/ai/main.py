@@ -22,8 +22,8 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     message: str
     history: list[dict] = []
-    scenario: str = "Serbest sohbet"
-    tense: str = "Genel"
+    scenario: str = "Free conversation"
+    tense: str = "General"
     mode: str = "free"
     level: str = "B1"
 

@@ -27,7 +27,7 @@ async def dashboard():
     error_count = await ErrorPoolItem.find(ErrorPoolItem.user_id == user_id).count()
     attempts = await UserAttempt.find(UserAttempt.user_id == user_id).count()
     correct = await UserAttempt.find(UserAttempt.user_id == user_id, UserAttempt.is_correct == True).count()
-    vocab_queue = await get_vocab_queue(limit=5)
+    vocab_queue = await get_vocab_queue(limit=5, enrich=False)
     user = await User.find_one(User.user_id == user_id)
 
     known_words_count = await KnownWord.find(KnownWord.user_id == user_id).count()

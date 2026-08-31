@@ -14,7 +14,14 @@ import { SpeakTranslatePage } from "./pages/SpeakTranslatePage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SubstitutionPage } from "./pages/SubstitutionPage";
 
-const qc = new QueryClient();
+const qc = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
 export default function App() {
   return (

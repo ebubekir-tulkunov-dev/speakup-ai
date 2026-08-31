@@ -43,8 +43,8 @@ class SessionDetail(BaseModel):
 
 
 class CreateSessionBody(BaseModel):
-    scenario: str = "Serbest sohbet"
-    tense: str = "Genel"
+    scenario: str = "Free conversation"
+    tense: str = "General"
     mode: str = "free"
     level: str = "B1"
     title: str | None = None
@@ -67,10 +67,13 @@ class ChatHistoryResponse(BaseModel):
 
 
 class SaveChatHistoryRequest(BaseModel):
-    scenario: str = "Serbest sohbet"
-    tense: str = "Genel"
+    scenario: str = "Free conversation"
+    tense: str = "General"
     mode: str = "free"
     messages: list[ChatMessage] = Field(default_factory=list)
+
+
+_DEFAULT_TITLES = frozenset({"New chat", "Yeni sohbet"})
 
 
 def _parse_messages(raw: list) -> list[ChatMessage]:
@@ -92,7 +95,7 @@ def _parse_messages(raw: list) -> list[ChatMessage]:
     return parsed
 
 
-def _title_from_messages(messages: list[ChatMessage], fallback: str = "Yeni sohbet") -> str:
+def _title_from_messages(messages: list[ChatMessage], fallback: str = "New chat") -> str:
     for m in messages:
         if m.role == "user" and m.content.strip():
             text = m.content.strip().replace("\n", " ")
@@ -111,7 +114,7 @@ def _preview(messages: list) -> str:
 def _summary(session: ChatSession) -> SessionSummary:
     return SessionSummary(
         id=str(session.id),
-        title=getattr(session, "title", None) or session.scenario or "Yeni sohbet",
+        title=getattr(session, "title", None) or session.scenario or "New chat",
         scenario=session.scenario,
         tense=session.tense,
         mode=session.mode,
@@ -125,7 +128,7 @@ def _summary(session: ChatSession) -> SessionSummary:
 def _detail(session: ChatSession) -> SessionDetail:
     return SessionDetail(
         id=str(session.id),
-        title=getattr(session, "title", None) or session.scenario or "Yeni sohbet",
+        title=getattr(session, "title", None) or session.scenario or "New chat",
         scenario=session.scenario,
         tense=session.tense,
         mode=session.mode,
@@ -153,7 +156,7 @@ async def list_sessions(limit: int = 50):
 async def create_session(body: CreateSessionBody):
     session = ChatSession(
         user_id=settings.default_user_id,
-        title=body.title or "Yeni sohbet",
+        title=body.title or "New chat",
         scenario=body.scenario,
         tense=body.tense,
         mode=body.mode,
@@ -191,7 +194,7 @@ async def save_session(session_id: str, body: SaveSessionBody):
     # Auto-title from first user message if still default / empty
     if body.title:
         session.title = body.title
-    elif not session.title or session.title in {"Yeni sohbet", session.scenario}:
+    elif not session.title or session.title in _DEFAULT_TITLES or session.title == session.scenario:
         session.title = _title_from_messages(body.messages, session.scenario)
 
     session.updated_at = datetime.utcnow()
@@ -230,7 +233,7 @@ async def _get_or_create_session(scenario: str, tense: str, mode: str) -> ChatSe
 
 
 @router.get("/history", response_model=ChatHistoryResponse)
-async def get_history(scenario: str = "Serbest sohbet", tense: str = "Genel", mode: str = "free"):
+async def get_history(scenario: str = "Free conversation", tense: str = "General", mode: str = "free"):
     session = await _get_or_create_session(scenario, tense, mode)
     return ChatHistoryResponse(
         session_id=str(session.id),
@@ -245,7 +248,7 @@ async def save_history(body: SaveChatHistoryRequest):
     session = await _get_or_create_session(body.scenario, body.tense, body.mode)
     session.messages = [m.model_dump() for m in body.messages]
     session.mode = body.mode
-    if not session.title or session.title == "Yeni sohbet":
+    if not session.title or session.title in _DEFAULT_TITLES:
         session.title = _title_from_messages(body.messages, body.scenario)
     session.updated_at = datetime.utcnow()
     await session.save()

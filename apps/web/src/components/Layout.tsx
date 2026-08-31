@@ -18,12 +18,12 @@ import { CaptureWordDialog } from "@/components/CaptureWordDialog";
 
 const links = [
   { to: "/", label: "Dashboard", icon: Home },
+  { to: "/voice", label: "Live Voice", icon: Mic },
   { to: "/vocab", label: "Vocabulary", icon: BookOpen },
   { to: "/reader", label: "Reader", icon: BookText },
   { to: "/speak", label: "Speak & Translate", icon: Speech },
   { to: "/scenarios", label: "Scenarios", icon: MessageSquare },
   { to: "/chat", label: "Chat", icon: Bot },
-  { to: "/voice", label: "Live Voice", icon: Mic },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 

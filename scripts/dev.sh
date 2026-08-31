@@ -11,6 +11,34 @@ else
   echo "Uyarı: $ROOT/.env bulunamadı. cp .env.example .env yapın."
 fi
 
+ensure_python_venv() {
+  local service_dir="$1"
+  local name="$2"
+  cd "$service_dir"
+  if [ ! -f .venv/bin/activate ]; then
+    echo "→ $name: .venv yok, oluşturuluyor..."
+    python3 -m venv .venv
+    # shellcheck disable=SC1091
+    source .venv/bin/activate
+    pip install -r requirements.txt
+    deactivate
+  fi
+}
+
+ensure_web_deps() {
+  cd "$ROOT/apps/web"
+  if [ ! -d node_modules ]; then
+    echo "→ Web: node_modules yok, npm install çalıştırılıyor..."
+    npm install
+  fi
+}
+
+ensure_deps() {
+  ensure_python_venv "$ROOT/services/api" "API"
+  ensure_python_venv "$ROOT/services/ai" "AI"
+  ensure_web_deps
+}
+
 run_api() {
   cd "$ROOT/services/api" && source .venv/bin/activate && uvicorn main:app --reload --port 8000
 }
@@ -28,6 +56,7 @@ run_voice() {
 }
 
 run_all() {
+  ensure_deps
   PIDS=()
 
   cleanup() {
@@ -58,11 +87,12 @@ run_all() {
 }
 
 case "${1:-}" in
-  api) run_api ;;
-  ai) run_ai ;;
-  web) run_web ;;
-  voice) run_voice ;;
+  api) ensure_python_venv "$ROOT/services/api" "API"; run_api ;;
+  ai) ensure_python_venv "$ROOT/services/ai" "AI"; run_ai ;;
+  web) ensure_web_deps; run_web ;;
+  voice) ensure_python_venv "$ROOT/services/voice" "Voice"; run_voice ;;
   seed)
+    ensure_python_venv "$ROOT/services/api" "API"
     cd "$ROOT/services/api" && source .venv/bin/activate && PYTHONPATH=. python scripts/seed.py
     ;;
   all|"")

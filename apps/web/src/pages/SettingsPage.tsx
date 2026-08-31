@@ -33,7 +33,10 @@ export function SettingsPage() {
         tts_provider: tts,
         native_lang: nativeLang,
       }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["settings"] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["settings"] });
+      qc.invalidateQueries({ queryKey: ["vocab"] });
+    },
   });
 
   if (isLoading) return <p className="text-muted-foreground">Loading...</p>;

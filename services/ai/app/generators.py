@@ -465,8 +465,20 @@ async def generate_speak_prompts(
     angle: str = "",
     tense: str = "present habitual",
     exclude_texts: list[str] | None = None,
+    native_lang: str = "tr",
+    target_lang: str = "en",
 ) -> dict:
-    """Generate a cohesive Turkish text for oral TR→EN translation practice using high-frequency daily vocab."""
+    """Generate a cohesive text in the learner's native language for oral translation practice."""
+    LANG_NAMES: dict[str, str] = {
+        "tr": "Turkish", "en": "English", "de": "German", "es": "Spanish",
+        "fr": "French", "ar": "Arabic", "ru": "Russian", "zh": "Chinese",
+        "ja": "Japanese", "ko": "Korean", "pt": "Portuguese", "it": "Italian",
+        "nl": "Dutch", "pl": "Polish", "uk": "Ukrainian",
+    }
+
+    native_name = LANG_NAMES.get(native_lang, native_lang)
+    target_name = LANG_NAMES.get(target_lang, target_lang)
+
     word_list_str = ""
     if word_pool:
         items = [f"- {w.get('lemma', '')}" for w in word_pool[:20] if w.get("lemma")]
@@ -477,56 +489,57 @@ async def generate_speak_prompts(
         clipped = [t.strip()[:180] for t in exclude_texts if t and t.strip()][:5]
         if clipped:
             bullets = "\n".join(f"- {t}…" for t in clipped)
-            exclude_note = f"\n\nÖNCEKİ METİNLER (bunlara BENZEME, aynı olayları/kelime sırasını tekrarlama):\n{bullets}"
+            exclude_note = (
+                f"\n\nPREVIOUS TEXTS (do NOT repeat the same events or wording):\n{bullets}"
+            )
 
-    tense_map = {
-        "present habitual": "geniş zaman (yaparım, giderim) — alışkanlık anlat",
-        "present continuous": "şimdiki zaman (-iyor) — şu an olan bir sahne anlat",
-        "past simple": "geçmiş zaman (-di) — bugün/dün yaşanan somut bir olay anlat",
-        "future": "gelecek (yapacağım / edeceğim) — yarın veya yakında yapılacak plan anlat",
+    tense_guide = {
+        "present habitual": "present simple / habitual — describe a routine or habit",
+        "present continuous": "present continuous — describe a scene happening now",
+        "past simple": "past simple — describe a concrete event today or yesterday",
+        "future": "future — describe a plan for tomorrow or soon",
     }
-    tense_tr = tense_map.get(tense, tense_map["present habitual"])
+    tense_hint = tense_guide.get(tense, tense_guide["present habitual"])
 
-    system = """Sen ana dili Türkçe olan bir yazarsın. Her istekte TAMAMEN YENİ bir metin yazarsın.
-Öğrenci Türkçe metni okuyup sesli olarak İngilizceye çevirecek.
-Sadece geçerli JSON döndür; markdown veya ekstra metin yazma.
+    system = f"""You are a native {native_name} writer. Each request must be a COMPLETELY NEW text.
+The student will read the {native_name} paragraph aloud and speak the {target_name} translation.
+Return ONLY valid JSON; no markdown or extra commentary.
 Format:
-{
-  "topic_tr": "bu metne özel kısa Türkçe başlık (genel kategori adı değil)",
-  "tips_tr": "çeviri için tek cümlelik Türkçe ipucu",
-  "text_tr": "doğal, akıcı, bağlı bir Türkçe paragraf",
-  "text_en": "metnin doğal konuşma dili İngilizce çevirisi",
-  "focus_words": ["key", "english", "words"],
-  "hint_tr": "kısa Türkçe dilbilgisi ipucu veya boş string"
-}
+{{
+  "topic_tr": "short title in {native_name} (specific to this text, not the generic category name)",
+  "tips_tr": "one-sentence tip in {native_name} for translating this text",
+  "text_tr": "natural, fluent, connected paragraph in {native_name}",
+  "text_en": "natural spoken {target_name} translation of the full paragraph",
+  "focus_words": ["key", "english", "lemmas"],
+  "hint_tr": "short grammar hint in {native_name}, or empty string"
+}}
 
-KRİTİK — text_tr kuralları:
-- Ana dili Türkçe olan birinin günlük konuşması gibi yaz; çeviri kokusu yasak.
-- Verilen AÇI / sahneye sıkı sıkıya uy; klişe sabah rutini (kalk-yıka-kahvaltı-pazar) varsayılanı YASAK.
-- Her seferinde farklı mekân, kişi, duygu veya küçük olay kullan.
-- Zamanı tutarlı tut; karıştırma.
-- Yapay, abartılı, mantıksız detay yok.
-- Liste gibi cümle dizme; kısa, net, günlük kelimeler kullan."""
+CRITICAL — text_tr rules:
+- Write like everyday speech for a native {native_name} speaker; no translationese.
+- Follow the given scene/angle strictly; ban cliché morning routines unless the angle requires it.
+- Use a different place, person, mood, or small event each time.
+- Keep tense consistent.
+- No lists of disconnected sentences; use simple, everyday vocabulary."""
 
     words_note = (
-        f"\nİngilizce çeviride mümkünse şu kelimelerden doğal olanları tercih et "
-        f"(Türkçe metni bunlara uydurma):\n{word_list_str}"
+        f"\nIn the {target_name} translation, naturally prefer these English lemmas where possible "
+        f"(do not force the {native_name} text to fit awkwardly):\n{word_list_str}"
         if word_list_str
-        else "\nİngilizce çeviride günlük, basit kelimeler kullan."
+        else f"\nUse everyday, simple words in the {target_name} translation."
     )
 
-    user = f"""Genel kategori: {topic}
-Zorunlu sahne / açı: {angle or 'günlük hayattan sıradışı olmayan ama spesifik bir an'}
-Zaman: {tense_tr}
-Öğrenci seviyesi (İngilizce çeviri için): {level}
-Hedef uzunluk: yaklaşık {word_count} Türkçe kelime (±20%).
+    user = f"""Category: {topic}
+Required scene / angle: {angle or "a specific but ordinary moment from daily life"}
+Tense: {tense_hint}
+Student level ({target_name} output): {level}
+Target length: about {word_count} words in {native_name} (±20%).
 {words_note}
 {exclude_note}
 
-Önce bu sahneye özel, daha önce yazılmamış doğal bir Türkçe paragraf yaz; sonra İngilizceye çevir.
-text_en {level} seviyesinde doğal konuşma dili olsun ve text_tr'nin tamamını karşılasın.
-focus_words = çevirideki 4–8 önemli İngilizce lemma.
-Başlık, numara, madde işareti ekleme."""
+First write a fresh, natural {native_name} paragraph for this scene; then translate it to {target_name}.
+text_en must be natural spoken {target_name} at {level} level and cover the full {native_name} text.
+focus_words = 4–8 important English lemmas from the translation.
+No numbering or bullet points in text_tr."""
     return await _invoke_json(system, user)
 
 

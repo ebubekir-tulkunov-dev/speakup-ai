@@ -1,6 +1,10 @@
+<<<<<<< HEAD
 # Language App
+=======
+# Speak Up AI
+>>>>>>> a9ba29e (ready for public)
 
-**An AI-powered personal language learning platform for Turkish speakers learning English.**
+**An AI-powered personal language learning platform.** Practice a target language (currently English) with explanations and glosses in your native language.
 
 From spaced-repetition flashcards to live voice conversation, all practice modules live in a single interface. Text AI (Qwen) and voice AI (LiveKit) work together; your progress is stored in MongoDB.
 
@@ -12,18 +16,51 @@ From spaced-repetition flashcards to live voice conversation, all practice modul
 |--------|-------------|
 | **Dashboard** | Daily goals, streaks, accuracy stats, and quick-access cards |
 | **Vocabulary** | SM-2 spaced repetition (SRS) flashcard system |
-| **Sentence Practice** | Build sentences from vocabulary cards |
-| **Substitution Drill** | Swap words in pattern sentences |
-| **Top 100 Words** | Read aloud the most common English words |
-| **Journal** | Daily writing focused on future and past tenses |
-| **Tenses** | All 12 English tenses with explanations and exercises |
+| **Sentence Practice** | Build sentences from vocabulary cards (`/vocab/practice`) |
+| **Substitution Drill** | Swap words in pattern sentences (`/vocab/drill`) |
 | **Reader** | Read texts with instant word-level translation on hover |
-| **Lyrics** | Vocabulary and listening practice through song lyrics |
-| **Speak & Translate** | Read Turkish text, speak the English translation |
+| **Speak & Translate** | Read a prompt in your native language, speak it in the target language |
 | **Scenarios** | Context-based role-play practice |
 | **Chat** | Free-form conversation with a LangChain AI tutor |
-| **Live Voice** | Real-time spoken English practice via LiveKit |
-| **Settings** | Daily goals and preferences |
+| **Live Voice** | Real-time spoken practice in the target language via LiveKit |
+| **Settings** | Native language, daily goals, and preferences |
+
+### Temporarily disabled
+
+These routes still exist but show a “coming soon” screen while algorithms and content are being reworked (`apps/web/src/lib/disabledFeatures.ts`):
+
+| Module | Route |
+|--------|-------|
+| Top 100 Words | `/top-words` |
+| Journal | `/journal` |
+| Tenses | `/tenses` |
+| Lyrics | `/lyrics` |
+
+---
+
+## Languages
+
+Set your **native language** in Settings. Vocabulary glosses, Speak & Translate prompts, and other native-language help follow that choice. The **target language** is currently English.
+
+| Code | Native language |
+|------|-----------------|
+| `tr` | Türkçe |
+| `en` | English |
+| `de` | Deutsch |
+| `es` | Español |
+| `fr` | Français |
+| `ar` | العربية |
+| `ru` | Русский |
+| `zh` | 中文 |
+| `ja` | 日本語 |
+| `ko` | 한국어 |
+| `pt` | Português |
+| `it` | Italiano |
+| `nl` | Nederlands |
+| `pl` | Polski |
+| `uk` | Українська |
+
+The list lives in `apps/web/src/lib/languages.ts`.
 
 ---
 
@@ -249,9 +286,9 @@ dil-programi/
 
 | Module | API | AI | Voice |
 |--------|:---:|:--:|:-----:|
-| Vocabulary, Tenses, Reader | ✓ | ✓ | |
+| Vocabulary, Reader | ✓ | ✓ | |
 | Chat, Scenarios | ✓ | ✓ | |
-| Speak & Translate, Journal | ✓ | ✓ | |
+| Speak & Translate | ✓ | ✓ | |
 | Live Voice | ✓ | | ✓ |
 
 Text-based modules only need the **API + AI** services. Live voice also requires **LiveKit + the voice agent**.

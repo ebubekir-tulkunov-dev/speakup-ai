@@ -62,7 +62,8 @@ Rules:
 
 
 def _chat_prompt(scenario: str, tense: str, mode: str, level: str = "B1") -> str:
-    if mode == "scenario" and scenario != "Serbest sohbet":
+    free_chat = scenario in {"Serbest sohbet", "Free conversation"}
+    if mode == "scenario" and not free_chat:
         return CHAT_SCENARIO_PROMPT.format(scenario=scenario, tense=tense, level=level)
     return CHAT_FREE_PROMPT.format(level=level)
 

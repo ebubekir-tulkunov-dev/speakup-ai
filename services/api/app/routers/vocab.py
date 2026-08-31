@@ -37,15 +37,19 @@ async def vocab_queue(
     level: str | None = None,
     levels: str | None = None,
     word_type: str | None = None,
+    direction: str | None = None,
 ):
     # Accept either ?level=B1 or ?levels=B1,B2 (multi-select)
     level_list = [p.strip() for p in levels.split(",") if p.strip()] if levels else None
+    if direction and direction not in ("native_to_target", "target_to_native"):
+        raise HTTPException(400, "direction must be native_to_target or target_to_native")
     return {
         "items": await get_vocab_queue(
             limit=limit,
             level=level,
             levels=level_list,
             word_type=word_type,
+            direction=direction,
         )
     }
 

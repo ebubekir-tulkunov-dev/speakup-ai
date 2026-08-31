@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { CEFR_LEVEL_OPTIONS } from "@/lib/cefr";
+import { speechLocale } from "@/lib/languages";
 
 const CEFR_LEVELS = CEFR_LEVEL_OPTIONS;
 
@@ -28,11 +29,19 @@ function toggleLevel(selected: string[], value: string): string[] {
   return [...selected, value];
 }
 
+type VocabDirection = "native_to_target" | "target_to_native";
+
+const VOCAB_DIRECTION_KEY = "vocab-direction";
+
 export function VocabPage() {
   const qc = useQueryClient();
   // Empty = all levels ("Hepsi"). Otherwise one or more CEFR levels.
   const [levels, setLevels] = useState<string[]>(["B1"]);
   const [wordType, setWordType] = useState("ALL");
+  const [direction, setDirection] = useState<VocabDirection>(() => {
+    const saved = localStorage.getItem(VOCAB_DIRECTION_KEY);
+    return saved === "target_to_native" ? "target_to_native" : "native_to_target";
+  });
   const [current, setCurrent] = useState(0);
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [hasGuessed, setHasGuessed] = useState(false);
@@ -46,9 +55,21 @@ export function VocabPage() {
   const levelsKey = allLevelsSelected ? "ALL" : [...levels].sort().join(",");
   const primaryLevel = allLevelsSelected ? "B1" : levels[0];
 
+  const { data: settings } = useQuery({ queryKey: ["settings"], queryFn: api.settings });
+  const nativeLangKey = settings?.native_lang ?? "tr";
+  const targetLangKey = settings?.target_lang ?? "en";
+  const nativeLabel = nativeLangKey.toUpperCase();
+  const targetLabel = targetLangKey.toUpperCase();
+
   const { data, isLoading } = useQuery({
-    queryKey: ["vocab", levelsKey, wordType],
-    queryFn: () => api.vocabQueue(10, allLevelsSelected ? undefined : levels, wordType === "ALL" ? undefined : wordType),
+    queryKey: ["vocab", levelsKey, wordType, nativeLangKey, direction],
+    queryFn: () =>
+      api.vocabQueue(
+        10,
+        allLevelsSelected ? undefined : levels,
+        wordType === "ALL" ? undefined : wordType,
+        direction,
+      ),
     refetchOnWindowFocus: false,
     staleTime: 60_000,
   });
@@ -62,7 +83,12 @@ export function VocabPage() {
     setHasGuessed(false);
     setIsCorrectGuess(false);
     setTranslatedExample(null);
-  }, [levelsKey, wordType]);
+  }, [levelsKey, wordType, nativeLangKey, direction]);
+
+  const setDirectionAndPersist = (next: VocabDirection) => {
+    setDirection(next);
+    localStorage.setItem(VOCAB_DIRECTION_KEY, next);
+  };
 
   // Fill the queue once per session — do NOT reset on background refetch
   useEffect(() => {
@@ -208,15 +234,27 @@ export function VocabPage() {
 
   const speak = (e?: React.MouseEvent) => {
     e?.stopPropagation();
-    if (!card?.lemma) return;
-    const utterance = new SpeechSynthesisUtterance(card.lemma);
-    utterance.lang = "en-US";
+    if (!card) return;
+    const speakTarget = isNativeToTarget && !hasGuessed;
+    const text = speakTarget ? nativeGloss : card.lemma;
+    if (!text) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = speakTarget
+      ? speechLocale(card.native_lang ?? "tr")
+      : speechLocale(card.target_lang ?? "en");
     window.speechSynthesis.speak(utterance);
   };
 
-  const isEnToTr = card?.card_type === "en_to_tr";
-  const prompt = isEnToTr ? card?.lemma : card?.translation_tr;
-  const correctAnswer = isEnToTr ? card?.translation_tr : card?.lemma;
+  const isNativeToTarget =
+    card?.card_type === "native_to_target" ||
+    card?.card_type === "tr_to_en" ||
+    (card?.card_type !== "target_to_native" &&
+      card?.card_type !== "en_to_tr" &&
+      direction === "native_to_target");
+  const nativeGloss = card?.native_translation ?? card?.translation_tr;
+  const prompt = isNativeToTarget ? nativeGloss : card?.lemma;
+  const correctAnswer = isNativeToTarget ? card?.lemma : nativeGloss;
 
   const handleSelectOption = (option: string) => {
     if (hasGuessed) return;
@@ -250,7 +288,7 @@ export function VocabPage() {
 
   if (!card) {
     return (
-      <div className="mx-auto max-w-lg space-y-6 animate-in fade-in duration-300">
+      <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in duration-300">
         <PageHeader 
           title="Vocabulary Flashcards"
           description="Build your English vocabulary by category"
@@ -317,13 +355,43 @@ export function VocabPage() {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block text-center">Card Direction</label>
+          <div className="flex justify-center gap-1.5 p-1 bg-secondary/35 rounded-xl border border-border/40 w-fit mx-auto">
+            <button
+              type="button"
+              onClick={() => setDirectionAndPersist("native_to_target")}
+              className={cn(
+                "px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all duration-300 cursor-pointer",
+                direction === "native_to_target"
+                  ? "bg-primary text-primary-foreground shadow-sm scale-102"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/40",
+              )}
+            >
+              {nativeLabel} → {targetLabel}
+            </button>
+            <button
+              type="button"
+              onClick={() => setDirectionAndPersist("target_to_native")}
+              className={cn(
+                "px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide uppercase transition-all duration-300 cursor-pointer",
+                direction === "target_to_native"
+                  ? "bg-primary text-primary-foreground shadow-sm scale-102"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/40",
+              )}
+            >
+              {targetLabel} → {nativeLabel}
+            </button>
+          </div>
+        </div>
+
         <Card className="bg-card/75 border-border/60 shadow-lg">
           <CardContent className="flex flex-col items-center gap-4 py-8">
             <p className="text-center text-muted-foreground text-sm leading-relaxed px-4">
               No words found for this level ({allLevelsSelected ? "All" : levels.join(", ")}) and type ({getWordTypeLabel(wordType)}). Generate new targeted words with AI to expand your vocabulary.
             </p>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-sm pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl pt-4">
               <Button onClick={() => generate.mutate("adjective")} disabled={generate.isPending} className="w-full flex gap-2">
                 <Sparkles className="size-4" />
                 Generate 30 Adjectives
@@ -365,7 +433,7 @@ export function VocabPage() {
   const options = card.options ?? [];
 
   return (
-    <div className="mx-auto max-w-lg space-y-6 animate-in fade-in duration-300">
+    <div className="mx-auto max-w-3xl space-y-6 animate-in fade-in duration-300">
       <PageHeader
         title="Vocabulary Flashcards"
         description="Smart flashcards optimized for your learning frequency"
@@ -415,6 +483,39 @@ export function VocabPage() {
         </div>
       </div>
 
+      {/* Direction: native → target or target → native */}
+      <div className="space-y-1.5">
+        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block text-center">
+          Card Direction
+        </label>
+        <div className="flex justify-center gap-1.5 p-1 bg-secondary/30 rounded-xl border border-border/40 w-fit mx-auto">
+          <button
+            type="button"
+            onClick={() => setDirectionAndPersist("native_to_target")}
+            className={cn(
+              "px-3 py-1 rounded-lg text-[11px] font-semibold tracking-wide uppercase transition-all duration-300 cursor-pointer",
+              direction === "native_to_target"
+                ? "bg-primary text-primary-foreground shadow-sm scale-102"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40",
+            )}
+          >
+            {nativeLabel} → {targetLabel}
+          </button>
+          <button
+            type="button"
+            onClick={() => setDirectionAndPersist("target_to_native")}
+            className={cn(
+              "px-3 py-1 rounded-lg text-[11px] font-semibold tracking-wide uppercase transition-all duration-300 cursor-pointer",
+              direction === "target_to_native"
+                ? "bg-primary text-primary-foreground shadow-sm scale-102"
+                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40",
+            )}
+          >
+            {targetLabel} → {nativeLabel}
+          </button>
+        </div>
+      </div>
+
       {/* Word Type Selector */}
       <div className="space-y-1.5">
         <div className="flex flex-wrap justify-center gap-1.5 p-1 bg-secondary/30 rounded-xl border border-border/40 w-fit mx-auto">
@@ -457,7 +558,7 @@ export function VocabPage() {
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase border-primary/20 text-primary">
-              {isEnToTr ? "EN → TR" : "TR → EN"}
+              {isNativeToTarget ? `${nativeLabel} → ${targetLabel}` : `${targetLabel} → ${nativeLabel}`}
             </Badge>
             {card.level && (
               <Badge variant="secondary" className="px-2 py-0.5 text-[10px] font-bold bg-secondary/60">
@@ -470,16 +571,17 @@ export function VocabPage() {
               </Badge>
             )}
           </div>
-          {(isEnToTr || hasGuessed) && (
-            <Button variant="ghost" size="icon" className="size-8 rounded-full bg-secondary/20 hover:bg-primary/10 text-primary transition-colors cursor-pointer" onClick={() => speak()}>
-              <Volume2 className="size-4" />
-            </Button>
-          )}
+          <Button variant="ghost" size="icon" className="size-8 rounded-full bg-secondary/20 hover:bg-primary/10 text-primary transition-colors cursor-pointer" onClick={() => speak()} title={isNativeToTarget && !hasGuessed ? "Listen (native)" : "Listen (English)"}>
+            <Volume2 className="size-4" />
+          </Button>
         </div>
 
         <div className="text-center space-y-2 py-2">
           <h2 className="text-4xl font-bold tracking-tight text-foreground">{prompt}</h2>
-          {isEnToTr && phonetic && (
+          {isNativeToTarget && phonetic && hasGuessed && (
+            <p className="text-sm font-mono text-muted-foreground/75 tracking-wider">{phonetic}</p>
+          )}
+          {!isNativeToTarget && phonetic && (
             <p className="text-sm font-mono text-muted-foreground/75 tracking-wider">{phonetic}</p>
           )}
         </div>
@@ -526,7 +628,7 @@ export function VocabPage() {
         {/* Revealed details section */}
         {hasGuessed && (
           <div className="space-y-4 pt-4 border-t border-border/40 animate-in fade-in-50 slide-in-from-top-3 duration-300">
-            {!isEnToTr && (
+            {!isNativeToTarget && (
               <div className="text-center space-y-1 py-1">
                 <p className="text-lg font-bold text-emerald-600">"{card.lemma}"</p>
                 <p className="text-xs text-muted-foreground italic">{card.translation_tr}</p>

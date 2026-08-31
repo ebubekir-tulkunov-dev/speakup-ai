@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Mic, RefreshCw, Sparkles, Volume2 } from "lucide-react";
 import { PageHeader } from "@/components/Layout";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { CEFR_LEVELS } from "@/lib/cefr";
+import { languageUiLabel, speechLocale } from "@/lib/languages";
 
 const LEVELS = CEFR_LEVELS;
 const RECENT_KEY = "speak-translate-recent";
@@ -30,11 +31,11 @@ const TOPICS = [
   { id: "plans and weekend", label: "Plans & Weekend" },
 ];
 
-function speakEn(text: string) {
+function speakText(text: string, lang: string) {
   if (!text.trim()) return;
   window.speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(text);
-  u.lang = "en-US";
+  u.lang = lang;
   window.speechSynthesis.speak(u);
 }
 
@@ -54,6 +55,15 @@ function saveRecent(texts: string[]) {
 }
 
 export function SpeakTranslatePage() {
+  const { data: settings, isLoading: settingsLoading } = useQuery({
+    queryKey: ["settings"],
+    queryFn: api.settings,
+  });
+  const nativeLang = settings?.native_lang ?? "tr";
+  const targetLang = settings?.target_lang ?? "en";
+  const nativeName = languageUiLabel(nativeLang);
+  const targetName = languageUiLabel(targetLang);
+
   const [level, setLevel] = useState("A2");
   const [topic, setTopic] = useState(TOPICS[0].id);
   const [customTopic, setCustomTopic] = useState("");
@@ -64,6 +74,10 @@ export function SpeakTranslatePage() {
   const recentRef = useRef<string[]>(loadRecent());
 
   const effectiveTopic = customTopic.trim() || topic;
+  const resultNativeLang = result?.native_lang ?? nativeLang;
+  const resultTargetLang = result?.target_lang ?? targetLang;
+  const resultNativeName = languageUiLabel(resultNativeLang);
+  const resultTargetName = languageUiLabel(resultTargetLang);
 
   const generate = useMutation({
     mutationFn: () =>
@@ -102,7 +116,7 @@ export function SpeakTranslatePage() {
     <div className="mx-auto max-w-2xl space-y-6 animate-in fade-in duration-300">
       <PageHeader
         title="Speak & Translate"
-        description="You get a Turkish text with everyday vocabulary; you translate it aloud into English."
+        description={`Read a ${nativeName} text with everyday vocabulary, then translate it aloud into ${targetName}.`}
       />
 
       {!result ? (
@@ -115,8 +129,8 @@ export function SpeakTranslatePage() {
               <div className="space-y-1 text-sm">
                 <p className="font-semibold text-foreground">How does it work?</p>
                 <ol className="list-decimal list-inside text-muted-foreground space-y-0.5 text-[13px]">
-                  <li>Read the Turkish text</li>
-                  <li>Translate aloud into English</li>
+                  <li>Read the {nativeName} text</li>
+                  <li>Translate aloud into {targetName}</li>
                   <li>Reveal the answer and listen to the model translation</li>
                 </ol>
               </div>
@@ -210,7 +224,11 @@ export function SpeakTranslatePage() {
               className="gap-2 w-full sm:w-auto"
             >
               <Sparkles className="size-4" />
-              {generate.isPending ? "Generating text..." : "Generate Turkish Text"}
+              {generate.isPending
+                ? "Generating text..."
+                : settingsLoading
+                  ? "Generate text"
+                  : `Generate ${nativeName} text`}
             </Button>
             {generate.isError && (
               <p className="text-xs text-destructive">Could not generate text. Check the AI service.</p>
@@ -249,7 +267,9 @@ export function SpeakTranslatePage() {
           <Card className="shadow-sm overflow-hidden">
             <CardContent className="p-0">
               <div className="bg-gradient-to-br from-primary/8 via-transparent to-transparent px-6 py-8 sm:px-8 sm:py-10 space-y-4">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-primary/70 text-center">Turkish</p>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-primary/70 text-center">
+                  {resultNativeName}
+                </p>
                 <p className="text-lg sm:text-xl font-medium tracking-tight text-foreground leading-relaxed text-left">
                   {result.text_tr}
                 </p>
@@ -270,7 +290,12 @@ export function SpeakTranslatePage() {
                     {revealed ? "Hide answer" : "Show answer"}
                   </Button>
                   {revealed && (
-                    <Button size="sm" variant="outline" onClick={() => speakEn(result.text_en)} className="gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => speakText(result.text_en, speechLocale(resultTargetLang))}
+                      className="gap-2"
+                    >
                       <Volume2 className="size-3.5" /> Listen
                     </Button>
                   )}
@@ -278,7 +303,9 @@ export function SpeakTranslatePage() {
 
                 {revealed ? (
                   <div className="rounded-xl bg-secondary/50 border border-border/50 px-4 py-4 space-y-3 animate-in fade-in duration-200">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground text-center">English</p>
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground text-center">
+                      {resultTargetName}
+                    </p>
                     <p className="text-base sm:text-lg font-medium text-foreground leading-relaxed">{result.text_en}</p>
                     {result.focus_words?.length > 0 && (
                       <div className="flex flex-wrap justify-center gap-1.5 pt-1">
@@ -292,7 +319,7 @@ export function SpeakTranslatePage() {
                   </div>
                 ) : (
                   <p className="text-center text-sm text-muted-foreground py-2">
-                    Now translate the entire text aloud into English — then reveal the answer.
+                    Now translate the entire text aloud into {resultTargetName} — then reveal the answer.
                   </p>
                 )}
               </div>

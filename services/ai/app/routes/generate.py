@@ -115,6 +115,46 @@ class TranslateTextRequest(BaseModel):
     target_lang: str = "Turkish"
 
 
+class TranslateWordsRequest(BaseModel):
+    words: list[str] = Field(default_factory=list)
+    target_lang: str = "Turkish"
+
+
+@router.post("/translate-words")
+async def translate_words_endpoint(body: TranslateWordsRequest):
+    if not settings.dashscope_api_key:
+        raise HTTPException(503, "DASHSCOPE_API_KEY yapılandırılmamış.")
+    if not body.words:
+        return {"translations": {}}
+    try:
+        import json
+        from app.llm import get_llm, _chunk_text
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        llm = get_llm(streaming=False, max_tokens=2048)
+        words_json = json.dumps(body.words, ensure_ascii=False)
+        system = (
+            "You translate English vocabulary words into the target language. "
+            "Return ONLY valid JSON with no markdown: "
+            '{"translations": {"english_word": "translation", ...}}. '
+            "Use the exact English lemma as each key (same spelling/casing as input)."
+        )
+        user = f"Target language: {body.target_lang}\nEnglish words: {words_json}"
+        res = await llm.ainvoke([SystemMessage(content=system), HumanMessage(content=user)])
+        raw = _chunk_text(res.content).strip()
+        if "```" in raw:
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        data = json.loads(raw.strip())
+        translations = data.get("translations", data) if isinstance(data, dict) else {}
+        return {"translations": translations if isinstance(translations, dict) else {}}
+    except HTTPException:
+        raise
+    except Exception as e:
+        _handle_ai_error(e)
+
+
 @router.post("/translate_text")
 async def translate_text_endpoint(body: TranslateTextRequest):
     if not settings.dashscope_api_key:
@@ -320,6 +360,8 @@ class SpeakPromptsRequest(BaseModel):
     angle: str = ""
     tense: str = "present habitual"
     exclude_texts: list[str] = Field(default_factory=list)
+    native_lang: str = "tr"
+    target_lang: str = "en"
 
 
 @router.post("/speak-prompts")
@@ -335,6 +377,8 @@ async def speak_prompts_endpoint(body: SpeakPromptsRequest):
             body.angle,
             body.tense,
             body.exclude_texts if body.exclude_texts else None,
+            body.native_lang,
+            body.target_lang,
         )
     except HTTPException:
         raise

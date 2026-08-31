@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from beanie import PydanticObjectId
 
 from app.config import settings
-from app.models import ErrorPoolItem, UserWord, Word
+from app.models import ErrorPoolItem, User, UserWord, Word
 
 QUALITY_MAP = {
     "again": 0,
@@ -50,17 +50,75 @@ def _parse_levels(level: str | None = None, levels: list[str] | None = None) -> 
     return cleaned or None
 
 
+def _default_card_type(native_lang: str, target_lang: str) -> str:
+    """Show native-language gloss → pick target word (production practice)."""
+    if native_lang == target_lang:
+        return "target_to_native"
+    return "native_to_target"
+
+
+def _pick_distractors(
+    pool: list[Word],
+    *,
+    lemma: str,
+    native_gloss: str,
+    word_type: str,
+    card_type: str,
+    pool_glosses: dict[str, str] | None = None,
+    count: int = 3,
+) -> list[str]:
+    import random
+
+    target_type = word_type or "noun"
+    typed = [w for w in pool if getattr(w, "word_type", "noun") == target_type]
+    source = typed if len(typed) >= count + 1 else pool
+    pool_glosses = pool_glosses or {}
+
+    if card_type == "target_to_native":
+        candidates = list({
+            pool_glosses.get(str(d.id), d.translation_tr).strip()
+            for d in source
+            if d.lemma.lower() != lemma.lower()
+            and pool_glosses.get(str(d.id), d.translation_tr).strip()
+            and pool_glosses.get(str(d.id), d.translation_tr).strip().lower() != native_gloss.strip().lower()
+        })
+        fallbacks = ["word", "term", "idea"]
+    else:
+        candidates = list({
+            d.lemma.strip()
+            for d in source
+            if d.lemma.lower() != lemma.lower() and d.lemma.strip()
+        })
+        fallbacks = ["word", "thing", "place"]
+
+    if len(candidates) >= count:
+        return random.sample(candidates, count)
+    extra = [f for f in fallbacks if f.lower() != lemma.lower() and f not in candidates]
+    return (candidates + extra)[:count]
+
+
 async def get_vocab_queue(
     limit: int = 20,
     level: str | None = None,
     levels: list[str] | None = None,
     word_type: str | None = None,
+    *,
+    enrich: bool = True,
+    direction: str | None = None,
 ) -> list[dict]:
     import random
 
     from app.services.basic_words import is_basic_lemma
+    from app.services.native_translation import resolve_native_translations
 
     user_id = settings.default_user_id
+    user = await User.find_one(User.user_id == user_id)
+    native_lang = (user.native_lang if user else "tr").lower()
+    target_lang = (user.target_lang if user else "en").lower()
+    if direction in ("native_to_target", "target_to_native"):
+        card_type_default = direction
+    else:
+        card_type_default = _default_card_type(native_lang, target_lang)
     now = datetime.utcnow()
     level_filter = _parse_levels(level=level, levels=levels)
 
@@ -153,8 +211,24 @@ async def get_vocab_queue(
                 result.append(word_card(word))
 
     random.shuffle(result)
-    for i, item in enumerate(result):
-        item["card_type"] = "en_to_tr" if i % 2 == 0 else "tr_to_en"
+    result = result[:limit]
+    if not enrich:
+        return result
+
+    for item in result:
+        item["card_type"] = card_type_default
+        item["native_lang"] = native_lang
+        item["target_lang"] = target_lang
+
+    # Native-language glosses (Settings → Native Language)
+    word_objs = []
+    for item in result:
+        w = await Word.get(item["word_id"])
+        if w:
+            word_objs.append(w)
+    native_map = await resolve_native_translations(word_objs, native_lang)
+    for item in result:
+        item["native_translation"] = native_map.get(item["word_id"], item["translation_tr"])
 
     # Build options for multiple choice guessing game
     total_count = await Word.count()
@@ -164,33 +238,27 @@ async def get_vocab_queue(
     else:
         distractor_pool = await Word.find().to_list()
 
+    pool_glosses = await resolve_native_translations(distractor_pool, native_lang)
+
     for item in result:
         lemma = item["lemma"]
-        translation_tr = item["translation_tr"]
+        native_gloss = item["native_translation"]
         card_type = item["card_type"]
+        word_type = item.get("word_type", "noun")
 
-        if card_type == "en_to_tr":
-            correct = translation_tr
-            distractors = list({
-                d.translation_tr.strip() 
-                for d in distractor_pool 
-                if d.lemma.lower() != lemma.lower() and d.translation_tr.strip().lower() != translation_tr.strip().lower()
-            })
-            if len(distractors) >= 3:
-                chosen_distractors = random.sample(distractors, 3)
-            else:
-                chosen_distractors = distractors + ["bilgi", "gözlem", "durum"][:3 - len(distractors)]
+        if card_type == "target_to_native":
+            correct = native_gloss
         else:
             correct = lemma
-            distractors = list({
-                d.lemma.strip() 
-                for d in distractor_pool 
-                if d.lemma.lower() != lemma.lower()
-            })
-            if len(distractors) >= 3:
-                chosen_distractors = random.sample(distractors, 3)
-            else:
-                chosen_distractors = distractors + ["info", "state", "point"][:3 - len(distractors)]
+
+        chosen_distractors = _pick_distractors(
+            distractor_pool,
+            lemma=lemma,
+            native_gloss=native_gloss,
+            word_type=word_type,
+            card_type=card_type,
+            pool_glosses=pool_glosses,
+        )
 
         options = [correct] + chosen_distractors
         random.shuffle(options)

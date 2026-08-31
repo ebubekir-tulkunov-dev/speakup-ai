@@ -128,9 +128,9 @@ class Scenario(Document):
 
 class ChatSession(Document):
     user_id: Indexed(str)
-    title: str = "Yeni sohbet"
-    scenario: str = "Serbest sohbet"
-    tense: str = "Genel"
+    title: str = "New chat"
+    scenario: str = "Free conversation"
+    tense: str = "General"
     mode: str = "free"
     level: str = "B1"
     messages: list[dict] = Field(default_factory=list)
@@ -193,6 +193,7 @@ class KnownWord(Document):
 class TranslationCache(Document):
     lemma: Indexed(str, unique=True)
     translation_tr: str
+    translations: dict[str, str] = Field(default_factory=dict)
 
     class Settings:
         name = "translation_cache"
