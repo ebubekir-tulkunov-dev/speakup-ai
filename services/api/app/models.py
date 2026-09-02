@@ -199,6 +199,58 @@ class TranslationCache(Document):
         name = "translation_cache"
 
 
+class PodcastEpisode(Document):
+    user_id: Indexed(str)
+    youtube_url: str
+    youtube_id: str | None = None
+    title: str = ""
+    channel: str | None = None
+    duration_sec: float | None = None
+    status: Literal["pending", "downloading", "transcribing", "ready", "failed"] = "pending"
+    error: str | None = None
+    speaker_count: int = 0
+    utterances: list[dict[str, Any]] = Field(default_factory=list)
+    # each: {speaker: int, start: float, end: float, text: str}
+    full_text: str = ""
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+    class Settings:
+        name = "podcast_episodes"
+        indexes = [
+            [("user_id", 1), ("created_at", -1)],
+            [("youtube_id", 1)],
+        ]
+
+
+class TopicSpeakQuestion(Document):
+    """Oral practice: level-based open questions with voice answers + corrections."""
+
+    user_id: Indexed(str)
+    level: str = "B1"
+    topic: str = ""
+    question: str = ""
+    question_tr: str | None = None
+    hint_tr: str | None = None
+    target_words: list[dict[str, Any]] = Field(default_factory=list)
+    # each: {lemma, type: noun|verb|adjective|adverb, tr}
+    target_patterns: list[dict[str, Any]] = Field(default_factory=list)
+    # each: {pattern, example, tr} — e.g. Since + clause, + main clause
+    qdrant_id: str | None = None
+    transcript: str | None = None
+    evaluation: dict[str, Any] | None = None
+    status: Literal["asked", "answered"] = "asked"
+    asked_at: datetime = Field(default_factory=datetime.utcnow)
+    answered_at: datetime | None = None
+
+    class Settings:
+        name = "topic_speak_questions"
+        indexes = [
+            [("user_id", 1), ("asked_at", -1)],
+            [("user_id", 1), ("level", 1), ("asked_at", -1)],
+        ]
+
+
 ALL_MODELS = [
     User,
     Word,
@@ -213,4 +265,6 @@ ALL_MODELS = [
     JournalEntry,
     KnownWord,
     TranslationCache,
+    PodcastEpisode,
+    TopicSpeakQuestion,
 ]

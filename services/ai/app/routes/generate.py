@@ -13,9 +13,11 @@ from app.generators import (
     generate_speak_prompts,
     generate_substitution_drill,
     generate_tense_content,
+    generate_topic_question,
     generate_vocab_words,
     correct_journal_text,
     enrich_single_word,
+    evaluate_spoken_answer,
     evaluate_student_sentence,
     translate_lyrics_lines,
 )
@@ -379,6 +381,58 @@ async def speak_prompts_endpoint(body: SpeakPromptsRequest):
             body.exclude_texts if body.exclude_texts else None,
             body.native_lang,
             body.target_lang,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        _handle_ai_error(e)
+
+
+class TopicQuestionRequest(BaseModel):
+    level: str = "B1"
+    topic: str = "daily life"
+    exclude_questions: list[str] = Field(default_factory=list)
+    exclude_topics: list[str] = Field(default_factory=list)
+
+
+@router.post("/topic-question")
+async def topic_question_endpoint(body: TopicQuestionRequest):
+    if not settings.dashscope_api_key:
+        raise HTTPException(503, "DASHSCOPE_API_KEY yapılandırılmamış.")
+    try:
+        return await generate_topic_question(
+            body.level,
+            body.topic,
+            body.exclude_questions or None,
+            body.exclude_topics or None,
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        _handle_ai_error(e)
+
+
+class EvaluateSpokenAnswerRequest(BaseModel):
+    level: str = "B1"
+    question: str
+    transcript: str
+    topic: str = ""
+    target_words: list[dict] = Field(default_factory=list)
+    target_patterns: list[dict] = Field(default_factory=list)
+
+
+@router.post("/evaluate-spoken-answer")
+async def evaluate_spoken_answer_endpoint(body: EvaluateSpokenAnswerRequest):
+    if not settings.dashscope_api_key:
+        raise HTTPException(503, "DASHSCOPE_API_KEY yapılandırılmamış.")
+    try:
+        return await evaluate_spoken_answer(
+            body.question,
+            body.transcript,
+            body.level,
+            body.topic,
+            body.target_words or None,
+            body.target_patterns or None,
         )
     except HTTPException:
         raise

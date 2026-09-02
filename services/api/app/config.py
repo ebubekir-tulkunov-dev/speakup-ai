@@ -25,6 +25,16 @@ class Settings(BaseSettings):
     livekit_api_secret: str = "secret"
     default_user_id: str = "local_user"
     ai_service_url: str = "http://localhost:8001"
+    deepgram_api_key: str = ""
+    podcast_tmp_dir: str = ""
+    dashscope_api_key: str = ""
+    dashscope_api_base: str = "https://dashscope-intl.aliyuncs.com/compatible-mode/v1"
+    dashscope_http_base: str = "https://dashscope-intl.aliyuncs.com/api/v1"
+    qdrant_url: str = "http://localhost:6333"
+    qwen_embed_model: str = "text-embedding-v4"
+    qwen_embed_dim: int = 1024
+    qwen_rerank_model: str = "qwen3-rerank"
+    topic_speak_similarity_threshold: float = 0.78
 
     @property
     def cors_origin_list(self) -> list[str]:

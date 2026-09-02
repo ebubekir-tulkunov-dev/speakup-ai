@@ -53,6 +53,78 @@ export interface LyricLine {
   tr: string;
 }
 
+export interface PodcastUtterance {
+  speaker: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface PodcastEpisode {
+  id: string;
+  youtube_url: string;
+  youtube_id?: string | null;
+  title: string;
+  channel?: string | null;
+  duration_sec?: number | null;
+  status: "pending" | "downloading" | "transcribing" | "ready" | "failed" | string;
+  error?: string | null;
+  speaker_count: number;
+  utterances: PodcastUtterance[];
+  full_text?: string;
+  created_at?: string | null;
+  updated_at?: string | null;
+  preview?: string;
+}
+
+export interface TopicSpeakEvaluation {
+  is_adequate?: boolean;
+  score?: number;
+  corrections?: Array<{
+    wrong: string;
+    correct: string;
+    explanation_tr: string;
+  }>;
+  improved_answer?: string;
+  model_answer?: string;
+  feedback_tr?: string;
+  fluency_note_tr?: string;
+  words_used?: string[];
+  words_missed?: string[];
+  patterns_used?: string[];
+  patterns_missed?: string[];
+}
+
+export interface TopicSpeakTargetWord {
+  lemma: string;
+  type: "noun" | "verb" | "adjective" | "adverb" | string;
+  tr?: string;
+}
+
+export interface TopicSpeakTargetPattern {
+  pattern: string;
+  example: string;
+  tr?: string;
+}
+
+export interface TopicSpeakQuestion {
+  id: string;
+  level: string;
+  topic: string;
+  question: string;
+  question_tr?: string | null;
+  hint_tr?: string | null;
+  target_words?: TopicSpeakTargetWord[];
+  target_patterns?: TopicSpeakTargetPattern[];
+  transcript?: string | null;
+  evaluation?: TopicSpeakEvaluation | null;
+  status: "asked" | "answered" | string;
+  asked_at?: string | null;
+  answered_at?: string | null;
+  duplicate_avoided?: boolean;
+  near_match?: Record<string, unknown> | null;
+}
+
 export interface ReaderQuestion {
   question: string;
   options: string[];
@@ -127,7 +199,18 @@ async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, init);
   if (!res.ok) {
     const text = await res.text().catch(() => "");
-    throw new Error(text || `Request failed: ${res.status}`);
+    let message = text || `Request failed: ${res.status}`;
+    try {
+      const j = JSON.parse(text) as { detail?: unknown };
+      if (typeof j.detail === "string") message = j.detail;
+      else if (Array.isArray(j.detail)) {
+        const msg = j.detail.map((d: { msg?: string }) => d.msg).filter(Boolean).join("; ");
+        if (msg) message = msg;
+      }
+    } catch {
+      /* keep raw text */
+    }
+    throw new Error(message);
   }
   return res.json() as Promise<T>;
 }
@@ -567,6 +650,93 @@ export const api = {
 
   deleteChatSession: (id: string) =>
     fetchJson(`${API}/chat/sessions/${id}`, { method: "DELETE" }),
+
+  podcastEpisodes: () =>
+    fetchJson<{
+      items: Array<{
+        id: string;
+        title: string;
+        channel?: string | null;
+        youtube_url: string;
+        duration_sec?: number | null;
+        status: string;
+        speaker_count: number;
+        error?: string | null;
+        preview?: string;
+        created_at?: string | null;
+      }>;
+    }>(`${API}/podcast/episodes`),
+
+  podcastEpisode: (id: string) =>
+    fetchJson<PodcastEpisode>(`${API}/podcast/episodes/${id}`),
+
+  importPodcast: (url: string, language = "en") =>
+    fetchJson<PodcastEpisode>(`${API}/podcast/import`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, language }),
+    }),
+
+  deletePodcast: (id: string) =>
+    fetchJson(`${API}/podcast/episodes/${id}`, { method: "DELETE" }),
+
+  topicSpeakTopics: () =>
+    fetchJson<{ items: string[] }>(`${API}/topic-speak/topics`),
+
+  topicSpeakNext: (body: {
+    level: string;
+    topic?: string;
+    prefer_fresh_days?: number;
+  }) =>
+    fetchJson<TopicSpeakQuestion>(`${API}/topic-speak/next`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    }),
+
+  topicSpeakAnswer: async (questionId: string, audio: Blob) => {
+    const fd = new FormData();
+    fd.append("question_id", questionId);
+    fd.append("audio", audio, "answer.webm");
+    const res = await fetch(`${API}/topic-speak/answer`, { method: "POST", body: fd });
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      let message = text || `Request failed: ${res.status}`;
+      try {
+        const j = JSON.parse(text) as { detail?: unknown };
+        if (typeof j.detail === "string") message = j.detail;
+      } catch {
+        /* keep */
+      }
+      throw new Error(message);
+    }
+    return res.json() as Promise<TopicSpeakQuestion>;
+  },
+
+  topicSpeakAnswerText: (questionId: string, transcript: string) =>
+    fetchJson<TopicSpeakQuestion>(`${API}/topic-speak/answer-text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question_id: questionId, transcript }),
+    }),
+
+  topicSpeakHistory: (opts?: { level?: string; days?: number; limit?: number }) =>
+    fetchJson<{ items: TopicSpeakQuestion[] }>(
+      `${API}/topic-speak/history${qs({
+        level: opts?.level,
+        days: opts?.days,
+        limit: opts?.limit,
+      })}`,
+    ),
+
+  topicSpeakCheckSimilar: (question: string, level?: string, days?: number) =>
+    fetchJson<{
+      is_duplicate: boolean;
+      near_match: Record<string, unknown> | null;
+      candidates: Array<Record<string, unknown>>;
+    }>(
+      `${API}/topic-speak/check-similar${qs({ question, level, days })}`,
+    ),
 
   translateText: (text: string, targetLang = "Turkish") =>
     fetchJson<{ translation: string }>(`${AI_URL}/generate/translate_text`, {

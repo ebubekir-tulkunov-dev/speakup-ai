@@ -13,6 +13,8 @@ import { SentencePracticePage } from "./pages/SentencePracticePage";
 import { SpeakTranslatePage } from "./pages/SpeakTranslatePage";
 import { ComingSoonPage } from "./pages/ComingSoonPage";
 import { SubstitutionPage } from "./pages/SubstitutionPage";
+import { PodcastDetailPage, PodcastPage } from "./pages/PodcastPage";
+import { TopicSpeakPage } from "./pages/TopicSpeakPage";
 
 const qc = new QueryClient({
   defaultOptions: {
@@ -40,8 +42,11 @@ export default function App() {
             <Route path="tenses" element={<ComingSoonPage feature="tenses" />} />
             <Route path="tenses/:id" element={<ComingSoonPage feature="tenses" />} />
             <Route path="speak" element={<SpeakTranslatePage />} />
+            <Route path="topic-speak" element={<TopicSpeakPage />} />
             <Route path="reader" element={<ReaderPage />} />
             <Route path="reader/:id" element={<ReaderDetailPage />} />
+            <Route path="podcast" element={<PodcastPage />} />
+            <Route path="podcast/:id" element={<PodcastDetailPage />} />
             <Route path="scenarios" element={<ScenariosPage />} />
             <Route path="chat" element={<ChatPage />} />
             <Route path="voice" element={<VoicePage />} />

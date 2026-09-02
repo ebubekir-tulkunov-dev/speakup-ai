@@ -3,13 +3,22 @@ DIL PROGRAMI — SERVIS CALISTIRMA KOMUTLARI
 
 Not: Proje kokundeki .env dosyasi gerekli (dil-programi/.env)
 MongoDB yerelde calisiyor olmali (mongodb://localhost:27017)
+Qdrant yerelde calisiyor olmali (http://localhost:6333) — Topic Speak tekrar soru kontrolu
 AI servisi (port 8001) kelime/zaman/okuyucu uretimi icin acik olmali
 DASHSCOPE_API_KEY .env dosyasinda tanimli olmali (sk- ile baslar)
 DASHSCOPE_API_BASE=https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+DASHSCOPE_HTTP_BASE=https://dashscope-intl.aliyuncs.com/api/v1
+DEEPGRAM_API_KEY podcast + Topic Speak ses cevirisi icin gerekli
+ffmpeg YouTube ses cikarimi icin kurulu olmali (brew install ffmpeg)
 
 
 ILK KURULUM (bir kez)
 ---------------------
+
+# Qdrant (Topic Speak — qwen embed/rerank duplicate check)
+cd docker
+docker compose up -d qdrant
+# UI: http://localhost:6333/dashboard
 
 # API
 cd services/api
@@ -70,6 +79,7 @@ KISA YOL (proje kokunden)
 ./scripts/dev.sh web
 ./scripts/dev.sh voice
 ./scripts/dev.sh seed
+./scripts/dev.sh qdrant
 
 # Web ilk kurulum (bir kez):
 # cd apps/web && npm install
@@ -81,3 +91,12 @@ API:     http://localhost:8000/docs
 AI:      http://localhost:8001/docs
 Web:     http://localhost:5173
 LiveKit: ws://127.0.0.1:7890
+Qdrant:  http://localhost:6333
+Topic Speak: http://localhost:5173/topic-speak
+
+Topic Speak notlari
+-------------------
+- QWEN_EMBED_MODEL=text-embedding-v4 (DashScope Qwen embedding)
+- QWEN_RERANK_MODEL=qwen3-rerank
+- Yeni soru once embed edilir, Qdrant'ta aranir, qwen3-rerank ile benzerlik dogrulanir
+- Sesli cevap Deepgram STT + LLM duzeltme

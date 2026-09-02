@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import init_db
-from app.routers import chat, dashboard, errors, journal, livekit, practice, reader, settings as settings_router, tenses, vocab
+from app.routers import chat, dashboard, errors, journal, livekit, podcast, practice, reader, settings as settings_router, tenses, topic_speak, vocab
 
 
 @asynccontextmanager
@@ -34,6 +34,8 @@ app.include_router(journal.router, prefix="/api")
 app.include_router(practice.router, prefix="/api")
 app.include_router(settings_router.router, prefix="/api")
 app.include_router(livekit.router, prefix="/api")
+app.include_router(podcast.router, prefix="/api")
+app.include_router(topic_speak.router, prefix="/api")
 
 
 @app.get("/")

@@ -586,3 +586,176 @@ Kurallar:
 
     return await _invoke_json(system, user)
 
+
+async def generate_topic_question(
+    level: str = "B1",
+    topic: str = "daily life",
+    exclude_questions: list[str] | None = None,
+    exclude_topics: list[str] | None = None,
+) -> dict:
+    """Generate one open spoken-practice question for the learner's CEFR level."""
+    exclude_note = ""
+    if exclude_questions:
+        bullets = "\n".join(f"- {q}" for q in exclude_questions[:10] if q)
+        if bullets:
+            exclude_note += f"\n\nDo NOT repeat or paraphrase these previous questions:\n{bullets}"
+    if exclude_topics:
+        exclude_note += f"\nPrefer a fresh angle; recently used topics: {', '.join(exclude_topics[:8])}."
+
+    level_patterns = {
+        "A1": "because / and / but; simple SVO sentences",
+        "A2": "because / so / when / then; simple reason or sequence",
+        "B1": "since / because / although / if; one complex sentence with a subordinate clause",
+        "B2": "since / although / while / which / even though; reason + contrast or relative clause",
+        "C1": "since / whereas / not only…but also / which; sophisticated linking",
+        "C2": "nuanced discourse markers and embedded clauses (since / whereas / whereby / in that)",
+    }
+    pattern_guide = level_patterns.get(level.upper(), level_patterns["B1"])
+
+    system = """You are an English speaking coach creating ONE open question for oral practice.
+Your job is to PUSH the student to use richer sentence STRUCTURE, not only vocabulary.
+Return ONLY valid JSON, no markdown.
+Format:
+{
+  "topic": "short topic label in English (2-4 words)",
+  "question": "ONE clear English question the student should answer out loud",
+  "question_tr": "Turkish translation of the question",
+  "hint_tr": "Turkish tip that FORCES a specific sentence pattern (name the pattern and give a starter frame)",
+  "target_words": [
+    {"lemma": "english word", "type": "noun|verb|adjective|adverb", "tr": "Turkish meaning"}
+  ],
+  "target_patterns": [
+    {
+      "pattern": "Since + clause, + main clause",
+      "example": "Since English is spoken all over the world, …",
+      "tr": "Sebep için: Since …, … kalıbını kullan"
+    }
+  ]
+}"""
+
+    user = f"""Student CEFR level: {level}
+Topic area: {topic}
+Recommended structure focus for this level: {pattern_guide}
+{exclude_note}
+
+Rules:
+- Ask exactly ONE open question (not yes/no only; invite 2–5 spoken sentences).
+- Match vocabulary and grammar expectations to {level}.
+- Make the topic feel SPECIFIC and different from generic textbook prompts.
+- Do not include full sample answers.
+- question must be English only.
+- target_words: 4–6 useful lemmas (mix noun + verb + adjective). Fit topic and level; include Turkish "tr".
+- target_patterns: 1–2 MANDATORY sentence frames the student must try in their answer.
+  Example of what we want: "Since English is spoken all over the world, learning it helps my career."
+  Each pattern needs: pattern name, a partial English example ending with …, and a Turkish instruction that forces that frame.
+  Prefer cause/result (since/because), contrast (although/while), or relative clauses when level allows.
+- hint_tr must explicitly tell the student to use at least one target_patterns frame (e.g. "Cevabında mutlaka 'Since …, …' cümlesi kur.")."""
+
+    data = await _invoke_json(system, user, max_tokens=900)
+    if isinstance(data, dict):
+        words = data.get("target_words") or []
+        cleaned = []
+        for w in words if isinstance(words, list) else []:
+            if not isinstance(w, dict):
+                continue
+            lemma = str(w.get("lemma") or "").strip().lower()
+            wtype = str(w.get("type") or "noun").strip().lower()
+            tr = str(w.get("tr") or "").strip()
+            if not lemma:
+                continue
+            if wtype not in {"noun", "verb", "adjective", "adverb"}:
+                wtype = "noun"
+            cleaned.append({"lemma": lemma, "type": wtype, "tr": tr})
+        data["target_words"] = cleaned[:6]
+
+        patterns = data.get("target_patterns") or []
+        cleaned_p = []
+        for p in patterns if isinstance(patterns, list) else []:
+            if not isinstance(p, dict):
+                continue
+            pattern = str(p.get("pattern") or "").strip()
+            example = str(p.get("example") or "").strip()
+            tr = str(p.get("tr") or "").strip()
+            if not pattern and not example:
+                continue
+            cleaned_p.append({"pattern": pattern, "example": example, "tr": tr})
+        data["target_patterns"] = cleaned_p[:2]
+    return data
+
+
+async def evaluate_spoken_answer(
+    question: str,
+    transcript: str,
+    level: str = "B1",
+    topic: str = "",
+    target_words: list[dict] | None = None,
+    target_patterns: list[dict] | None = None,
+) -> dict:
+    """Correct a spoken English answer (from STT transcript) with Turkish feedback."""
+    words_note = ""
+    if target_words:
+        items = [
+            f"- {w.get('lemma')} ({w.get('type')})"
+            for w in target_words
+            if w.get("lemma")
+        ]
+        if items:
+            words_note = (
+                "Target vocabulary the student was asked to use:\n"
+                + "\n".join(items)
+                + "\nIn words_used, list which of these appear (any inflection OK)."
+            )
+
+    patterns_note = ""
+    if target_patterns:
+        items = []
+        for p in target_patterns:
+            items.append(
+                f"- {p.get('pattern') or ''} | example: {p.get('example') or ''}"
+            )
+        patterns_note = (
+            "Target SENTENCE PATTERNS the student was asked to use:\n"
+            + "\n".join(items)
+            + "\nIn patterns_used / patterns_missed, judge whether they attempted that structure "
+            "(e.g. a real 'Since …, …' subordinate clause), not just the keyword alone."
+        )
+
+    system = """You are a supportive English speaking coach reviewing a student's spoken answer
+(transcribed from speech — ignore minor STT artifacts unless they change meaning).
+Keep the student's MEANING and opinions; upgrade structure and fluency.
+Return ONLY valid JSON, no markdown.
+
+Format:
+{
+  "is_adequate": true/false,
+  "score": 1-5,
+  "corrections": [
+    {"wrong": "exact wrong phrase", "correct": "fixed phrase", "explanation_tr": "1 sentence in Turkish"}
+  ],
+  "improved_answer": "rewrite the student's ideas in clearer English; MUST demonstrate each target_pattern (e.g. a real 'Since …, …' sentence) and weave in unused target words naturally",
+  "model_answer": "an alternative natural answer using the same required patterns",
+  "feedback_tr": "warm coaching feedback in Turkish; mention missing patterns if any (2 sentences max)",
+  "fluency_note_tr": "one line on fluency/structure in Turkish",
+  "words_used": ["lemma that appeared in the transcript"],
+  "words_missed": ["target lemma not used"],
+  "patterns_used": ["pattern name that was attempted"],
+  "patterns_missed": ["pattern name that was missing"]
+}"""
+
+    user = f"""Student level: {level}
+Topic: {topic or "general"}
+Question asked: "{question}"
+Student's spoken transcript: "{transcript}"
+{words_note}
+{patterns_note}
+
+Evaluate relevance, grammar, vocabulary, and especially whether required sentence patterns appear.
+If the transcript is choppy (fillers, broken clauses), improved_answer should rebuild it into connected speech
+while preserving the student's intent — similar to upgrading:
+"I want English because beneficial for work" →
+"I plan to master English because I believe it is beneficial for my career. Since English is spoken all over the world, practicing every day has already changed my routine."
+Empty corrections array if already good.
+If no targets given, return empty used/missed arrays for words and patterns."""
+
+    return await _invoke_json(system, user, max_tokens=1600)
+

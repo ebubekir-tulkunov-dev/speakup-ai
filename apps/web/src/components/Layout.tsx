@@ -5,11 +5,13 @@ import {
   BookText,
   Bot,
   GraduationCap,
+  Headphones,
   Home,
   MessageSquare,
   Mic,
   Settings,
   Speech,
+  MessagesSquare,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +21,10 @@ import { CaptureWordDialog } from "@/components/CaptureWordDialog";
 const links = [
   { to: "/", label: "Dashboard", icon: Home },
   { to: "/voice", label: "Live Voice", icon: Mic },
+  { to: "/topic-speak", label: "Topic Speak", icon: MessagesSquare },
   { to: "/vocab", label: "Vocabulary", icon: BookOpen },
   { to: "/reader", label: "Reader", icon: BookText },
+  { to: "/podcast", label: "Podcasts", icon: Headphones },
   { to: "/speak", label: "Speak & Translate", icon: Speech },
   { to: "/scenarios", label: "Scenarios", icon: MessageSquare },
   { to: "/chat", label: "Chat", icon: Bot },

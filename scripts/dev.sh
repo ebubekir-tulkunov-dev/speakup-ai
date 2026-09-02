@@ -95,11 +95,15 @@ case "${1:-}" in
     ensure_python_venv "$ROOT/services/api" "API"
     cd "$ROOT/services/api" && source .venv/bin/activate && PYTHONPATH=. python scripts/seed.py
     ;;
+  qdrant)
+    cd "$ROOT/docker" && docker compose up -d qdrant
+    echo "Qdrant → http://localhost:6333/dashboard"
+    ;;
   all|"")
     run_all
     ;;
   *)
-    echo "Kullanım: ./scripts/dev.sh [all|api|ai|web|voice|seed]"
+    echo "Kullanım: ./scripts/dev.sh [all|api|ai|web|voice|seed|qdrant]"
     echo "  all (veya argümansız) — api + ai + web birlikte"
     exit 1
     ;;
